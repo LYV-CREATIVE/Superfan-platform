@@ -1,177 +1,164 @@
-"use client";
-
-import {
-  Activity,
-  ArrowRight,
-  Crown,
-  Gift,
-  Sparkles,
-  Star,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-
-const fanJourney = [
-  { title: "Join the Inner Circle", subtitle: "Fan onboarding wizard captures preferences, social accounts, and city" },
-  { title: "Unlock Rewards", subtitle: "Points, badges, tiers, and marketplace offers keep fans moving" },
-  { title: "Refer & Amplify", subtitle: "Referral engine rewards fans for bringing new superfans" },
+const kpis = [
+  { label: "Total Points", value: "12,450", delta: "+320 today" },
+  { label: "Referrals", value: "38", delta: "+4 this week" },
+  { label: "Badges", value: "12", delta: "2 new" },
+  { label: "Next Reward", value: "VIP Soundcheck", delta: "Unlocks at 15k" },
 ];
 
-const adminModules = [
-  { title: "Rewards Manager", description: "Configure tiers, point rules, badges, unlocks, and reward campaigns." },
-  { title: "Marketplace Manager", description: "Launch merch drops, VIP experiences, ticket presales, or digital collectibles." },
-  { title: "Community & Referrals", description: "Run fan challenges, polls, Q&A, and referral competitions." },
-  { title: "Fan CRM & Analytics", description: "See top fans, retention, conversion, and superfan score insights." },
+const journeyCards = [
+  { title: "Complete Backstage Challenge", points: "+250 pts" },
+  { title: "Share Your Listening Story", points: "+150 pts" },
+  { title: "Vote in Today’s Poll", points: "+75 pts" },
 ];
 
-const marketplaceHighlights = [
-  { title: "Signed Merch Drops", detail: "Limited-run items gated by tier" },
-  { title: "VIP Access & Meetups", detail: "Fan experiences and backstage upgrades" },
-  { title: "Ticket Presale Upgrades", detail: "Give superfans first access" },
-  { title: "Digital Collectibles", detail: "Reward ownership for superfans" },
+const events = [
+  { title: "Austin Listening Party", detail: "RSVP closes in 12h", date: "Apr 02" },
+  { title: "NYC Soundcheck", detail: "VIP access only", date: "Apr 07" },
 ];
 
-const analyticsCallouts = [
-  { label: "Fan Retention", value: "78%" },
-  { label: "Referral Conversion", value: "24%" },
-  { label: "Merch Conversion", value: "3.4x" },
-  { label: "Avg. Superfan Spend", value: "$162" },
+const offers = [
+  { title: "Signed Vinyl + Poster", tier: "Gold Exclusive", points: "4,500 pts" },
+  { title: "Backstage Experience", tier: "Platinum Drop", points: "10,000 pts" },
+  { title: "Limited Hoodie", tier: "Silver Priority", points: "3,200 pts" },
+];
+
+const quickActions = [
+  "Share referral link",
+  "Complete daily check-in",
+  "Submit fan moment",
+  "Vote in poll",
 ];
 
 const tiers = [
-  { label: "Bronze", perks: ["Unlock fan dashboard", "Earn starter badge"] },
-  { label: "Silver", perks: ["Merch presales", "Community challenges"] },
-  { label: "Gold", perks: ["Ticket presales", "VIP livestreams"] },
-  { label: "Platinum", perks: ["Backstage experiences", "Collector drops"] },
+  { label: "Bronze", status: "Complete", icon: "🥉" },
+  { label: "Silver", status: "68%", icon: "🥈" },
+  { label: "Gold", status: "Locked", icon: "🥇" },
+  { label: "Platinum", status: "Locked", icon: "👑" },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-800/40 via-black to-slate-950 px-6 py-24">
-        <div className="mx-auto max-w-5xl space-y-8">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-sm font-semibold text-white/80">
-            <Sparkles size={16} /> Superfan Operating System
-          </p>
-          <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-            Turn casual listeners into superfans.
-          </h1>
-          <p className="max-w-3xl text-lg text-white/80">
-            Launch a branded fan experience with rewards, marketplace, referrals, and analytics in days—not months. Fans get access and status. You get data, monetization, and loyalty.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <button className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-lg font-semibold text-slate-900">
-              Book a Demo <ArrowRight size={18} />
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-lg font-semibold text-white/80">
-              See the Fan Journey
-            </button>
-          </div>
-          <div className="grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-6 sm:grid-cols-2 lg:grid-cols-4">
-            {analyticsCallouts.map((item) => (
-              <div key={item.label}>
-                <p className="text-sm uppercase tracking-wide text-white/60">{item.label}</p>
-                <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+    <div className="min-h-screen bg-midnight"> 
+      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-12 lg:flex-row">
+        <div className="flex-1 space-y-6">
+          <section className="glass-card p-6">
+            <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
+                ★
+              </span>
+              Fan Momentum
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {kpis.map((kpi) => (
+                <div key={kpi.label} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <p className="text-xs uppercase tracking-wide text-white/50">{kpi.label}</p>
+                  <p className="mt-2 text-2xl font-semibold">{kpi.value}</p>
+                  <p className="text-sm text-emerald-300">{kpi.delta}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-5xl space-y-6">
-          <div className="flex items-center gap-3 text-white/70">
-            <Star size={20} className="text-yellow-300" />
-            <p className="text-sm uppercase tracking-wide">Fan Journey</p>
-          </div>
-          <h2 className="text-3xl font-semibold text-white">How fans experience the platform</h2>
-          <div className="grid gap-6 sm:grid-cols-3">
-            {fanJourney.map((step, idx) => (
-              <div key={step.title} className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
-                <p className="text-sm font-semibold text-purple-400">Step 0{idx + 1}</p>
-                <h3 className="mt-3 text-xl font-semibold">{step.title}</h3>
-                <p className="mt-2 text-white/70">{step.subtitle}</p>
+          <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-purple-800/30 via-slate-900 to-midnight p-6 shadow-glass">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-white/60">Continue Your Journey</p>
+                <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>
+                  Keep the momentum going
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <button className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium text-white/80">
+                View Missions <span>➜</span>
+              </button>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {journeyCards.map((card) => (
+                <article key={card.title} className="rounded-2xl bg-white/10 p-4">
+                  <p className="text-sm text-white/70">{card.title}</p>
+                  <p className="mt-3 text-lg font-semibold text-emerald-300">{card.points}</p>
+                  <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-white">
+                    Start <span>→</span>
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
 
-      <section className="bg-slate-900/40 px-6 py-20">
-        <div className="mx-auto max-w-5xl space-y-10">
-          <div className="flex items-center gap-3 text-white/70">
-            <Users size={20} className="text-cyan-300" />
-            <p className="text-sm uppercase tracking-wide">Artist Control</p>
-          </div>
-          <h2 className="text-3xl font-semibold text-white">Admin command center</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {adminModules.map((module) => (
-              <div key={module.title} className="rounded-2xl border border-white/10 bg-slate-950/70 p-6">
-                <h3 className="text-xl font-semibold">{module.title}</h3>
-                <p className="mt-3 text-white/70">{module.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="glass-card space-y-4 p-6">
+              <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
+                <span>📅</span> Upcoming Events
+              </p>
+              {events.map((event) => (
+                <div key={event.title} className="flex items-center justify-between rounded-2xl bg-black/30 p-4">
+                  <div>
+                    <p className="text-sm font-semibold">{event.title}</p>
+                    <p className="text-xs text-white/60">{event.detail}</p>
+                  </div>
+                  <span className="text-sm font-medium text-white/70">{event.date}</span>
+                </div>
+              ))}
+            </div>
+            <div className="glass-card space-y-4 p-6">
+              <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
+                <span>🎁</span> Recommended Offers
+              </p>
+              {offers.map((offer) => (
+                <div key={offer.title} className="rounded-2xl bg-black/30 p-4">
+                  <p className="text-sm font-semibold">{offer.title}</p>
+                  <p className="text-xs uppercase tracking-wide text-white/50">{offer.tier}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-lg font-semibold text-emerald-300">{offer.points}</span>
+                    <button className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium">Redeem</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-5xl space-y-10">
-          <div className="flex items-center gap-3 text-white/70">
-            <Gift size={20} className="text-rose-300" />
-            <p className="text-sm uppercase tracking-wide">Marketplace & Rewards</p>
-          </div>
-          <h2 className="text-3xl font-semibold text-white">Offer playbook</h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {marketplaceHighlights.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-                <h3 className="text-lg font-semibold">{item.title}</h3>
-                <p className="mt-2 text-white/70">{item.detail}</p>
-              </div>
-            ))}
-          </div>
+          <section className="glass-card p-6">
+            <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
+              <span>🏆</span> Quick Actions
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {quickActions.map((action) => (
+                <button
+                  key={action}
+                  className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-medium text-white/80"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
 
-      <section className="bg-slate-900/30 px-6 py-20">
-        <div className="mx-auto max-w-5xl space-y-8">
-          <div className="flex items-center gap-3 text-white/70">
-            <Crown size={20} className="text-amber-300" />
-            <p className="text-sm uppercase tracking-wide">Tier Progression</p>
-          </div>
-          <h2 className="text-3xl font-semibold text-white">Bronze → Platinum</h2>
-          <div className="grid gap-6 sm:grid-cols-4">
-            {tiers.map((tier) => (
-              <div key={tier.label} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-                <p className="text-sm font-semibold text-purple-300">{tier.label}</p>
-                <ul className="mt-3 space-y-2 text-sm text-white/70">
-                  {tier.perks.map((perk) => (
-                    <li key={perk}>• {perk}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        <aside className="w-full max-w-sm space-y-6">
+          <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-amber-400/30 via-black to-aurora/30 p-6 text-white shadow-glass">
+            <p className="text-sm uppercase tracking-wide text-white/70">Tier Journey</p>
+            <h3 className="mt-2 text-xl font-semibold">Silver Level · 68% complete</h3>
+            <div className="mt-6 space-y-4">
+              {tiers.map((tier) => (
+                <div key={tier.label} className="flex items-center justify-between rounded-2xl bg-black/30 px-4 py-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span>{tier.icon}</span>
+                    {tier.label}
+                  </span>
+                  <span className="text-xs uppercase tracking-wide text-white/50">{tier.status}</span>
+                </div>
+              ))}
+            </div>
+          </section>
 
-      <section className="px-6 py-24">
-        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
-          <p className="text-sm uppercase tracking-wide text-white/60">Superfan Platform</p>
-          <h2 className="mt-4 text-3xl font-semibold text-white">Ready to launch your fan operating system?</h2>
-          <p className="mt-3 text-white/70">
-            Build an ecosystem fans love: onboarding, rewards, marketplace, community, and analytics—built for artists from day one.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <button className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-lg font-semibold text-slate-900">
-              Request Access <ArrowRight size={18} />
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-lg font-semibold text-white/80">
-              Explore Fan Experience
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
+          <section className="glass-card p-6">
+            <p className="text-sm uppercase tracking-wide text-white/60">Mobile Snapshot</p>
+            <div className="mt-4 h-80 rounded-2xl bg-gradient-to-b from-purple-700/40 to-black/60" />
+            <p className="mt-3 text-xs text-white/60">
+              Mobile view mirrors the mockups with scrollable cards and sticky CTA.
+            </p>
+          </section>
+        </aside>
+      </main>
+    </div>
   );
 }
