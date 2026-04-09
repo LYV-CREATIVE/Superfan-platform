@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Activity,
-  ArrowRight,
-  Crown,
-  Gift,
-  Sparkles,
-  Star,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Crown, Gift, Sparkles, Star, Users } from "lucide-react";
 
 const fanJourney = [
   { title: "Join the Inner Circle", subtitle: "Fan onboarding wizard captures preferences, social accounts, and city" },
