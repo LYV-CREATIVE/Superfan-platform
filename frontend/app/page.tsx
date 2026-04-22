@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const kpis = [
   { label: "Total Points", value: "12,450", delta: "+320 today" },
   { label: "Referrals", value: "38", delta: "+4 this week" },
@@ -22,11 +24,11 @@ const offers = [
   { title: "Limited Hoodie", tier: "Silver Priority", points: "3,200 pts" },
 ];
 
-const quickActions = [
-  "Share referral link",
-  "Complete daily check-in",
-  "Submit fan moment",
-  "Vote in poll",
+const quickActions: { label: string; href: string }[] = [
+  { label: "Share referral link", href: "/referrals" },
+  { label: "Browse marketplace", href: "/marketplace" },
+  { label: "Check rewards", href: "/rewards" },
+  { label: "Invite a friend", href: "/onboarding" },
 ];
 
 const tiers = [
@@ -38,7 +40,7 @@ const tiers = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-midnight"> 
+    <div className="min-h-screen bg-midnight">
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-12 lg:flex-row">
         <div className="flex-1 space-y-6">
           <section className="glass-card p-6">
@@ -122,12 +124,13 @@ export default function Home() {
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {quickActions.map((action) => (
-                <button
-                  key={action}
-                  className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-medium text-white/80"
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-medium text-white/80 transition hover:border-white/30 hover:bg-white/10"
                 >
-                  {action}
-                </button>
+                  {action.label}
+                </Link>
               ))}
             </div>
           </section>
