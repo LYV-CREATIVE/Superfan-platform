@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Star, Users } from "lucide-react";
 
 const steps = [
@@ -45,10 +46,12 @@ const experiences = [
 ];
 
 export default function OnboardingWizard() {
+  const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [formState, setFormState] = useState<Record<string, string>>({});
   const [smsStatus, setSmsStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [smsMessage, setSmsMessage] = useState("Ready to send the confirmation text.");
+  const [finishStatus, setFinishStatus] = useState<"idle" | "saving" | "error">("idle");
 
   const currentStep = steps[stepIndex];
   const progress = useMemo(() => ((stepIndex + 1) / steps.length) * 100, [stepIndex]);
@@ -134,6 +137,78 @@ export default function OnboardingWizard() {
     }
   };
 
+  /**
+   * Final-step submit: persists the profile, awards the signup bonus, sends
+   * the Twilio SMS (if a phone is provided), fires Mailchimp, and routes
+   * home. Doesn't require a phone — the wizard shouldn't dead-end on an
+   * optional field.
+   */
+  const handleFinish = async () => {
+    try {
+      setFinishStatus("saving");
+
+      // 1. Persist the profile + award signup bonus + record any ?ref= code
+      const refCode =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("ref") ?? undefined
+          : undefined;
+      const onboardRes = await fetch("/api/fan-engage/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: formState.firstName,
+          city: formState.city,
+          phone: formState.phone,
+          handle: formState.handle,
+          favoriteSong: formState.favoriteSong,
+          interest: formState.interest,
+          referralCode: refCode,
+          smsOptedIn: Boolean(formState.phone),
+          emailOptedIn: Boolean(formState.email),
+        }),
+      });
+
+      if (!onboardRes.ok) {
+        throw new Error(`Onboarding save failed (${onboardRes.status})`);
+      }
+
+      // 2. Mailchimp subscribe (fire-and-forget)
+      if (formState.email) {
+        fetch("/api/fan-engage/mailchimp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formState.email,
+            firstName: formState.firstName,
+            tags: formState.interest ? [formState.interest] : undefined,
+          }),
+        }).catch((err) => console.warn("Mailchimp subscribe did not complete:", err));
+      }
+
+      // 3. Twilio SMS confirmation (fire-and-forget; only if phone given)
+      if (formState.phone) {
+        fetch("/api/fan-engage/sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: formState.phone,
+            firstName: formState.firstName,
+            interest: formState.interest,
+          }),
+        }).catch((err) => console.warn("Twilio SMS did not complete:", err));
+      }
+
+      // 4. Route home so the updated profile renders with real data
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setFinishStatus("error");
+    }
+  };
+
+  const isLastStep = stepIndex === steps.length - 1;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 lg:flex-row">
@@ -178,14 +253,30 @@ export default function OnboardingWizard() {
               >
                 Back
               </button>
-              <button
-                onClick={nextStep}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900"
-                disabled={stepIndex === steps.length - 1}
-              >
-                Continue <ArrowRight size={16} />
-              </button>
+              {isLastStep ? (
+                <button
+                  onClick={handleFinish}
+                  disabled={finishStatus === "saving"}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-aurora to-ember px-6 py-3 text-sm font-semibold text-white shadow-glass transition hover:brightness-110 disabled:opacity-50"
+                >
+                  {finishStatus === "saving" ? "Saving…" : "Finish onboarding"}
+                  <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button
+                  onClick={nextStep}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900"
+                >
+                  Continue <ArrowRight size={16} />
+                </button>
+              )}
             </div>
+            {finishStatus === "error" && (
+              <p className="text-sm text-rose-300">
+                Could not save your profile. Are you still signed in? Try{" "}
+                <a href="/login" className="underline">signing in</a> and retrying.
+              </p>
+            )}
           </div>
 
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-4">
