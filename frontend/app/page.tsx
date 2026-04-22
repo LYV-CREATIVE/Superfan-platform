@@ -55,18 +55,26 @@ export default async function Home() {
   // preview content above.
   const kpiCards = kpis
     ? [
-        { label: "Total Points", value: formatPts(kpis.total_points), delta: "" },
+        {
+          label: "Total Points",
+          value: new Intl.NumberFormat("en-US").format(kpis.total_points),
+          delta: "",
+        },
         { label: "Referrals", value: String(kpis.referral_count), delta: "" },
         { label: "Badges", value: String(kpis.badge_count), delta: "" },
         {
           label: "Next Reward",
           value: kpis.next_tier?.display_name ?? "Max tier",
-          delta: kpis.points_to_next_tier != null
-            ? `${formatPts(kpis.points_to_next_tier)} to go`
-            : "",
+          delta:
+            kpis.points_to_next_tier != null
+              ? `${formatPts(kpis.points_to_next_tier)} to go`
+              : "",
         },
       ]
     : fallbackKpis;
+
+  // Show a "Finish profile" nudge when signed-in users have no first_name yet.
+  const needsProfile = fan !== null && !fan.first_name;
 
   // Featured offers: prefer DB, fall back to static preview rows.
   const offers =
@@ -85,6 +93,22 @@ export default async function Home() {
     <div className="min-h-screen bg-midnight">
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-12 lg:flex-row">
         <div className="flex-1 space-y-6">
+          {needsProfile && (
+            <section className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-aurora/40 bg-gradient-to-r from-aurora/20 via-slate-900 to-ember/20 px-5 py-4">
+              <div>
+                <p className="text-sm font-semibold">Finish setting up your profile</p>
+                <p className="text-xs text-white/70">
+                  Takes less than a minute — unlocks your referral code, SMS alerts, and a signup bonus.
+                </p>
+              </div>
+              <Link
+                href="/onboarding"
+                className="rounded-full bg-gradient-to-r from-aurora to-ember px-4 py-2 text-sm font-semibold text-white shadow-glass transition hover:brightness-110"
+              >
+                Complete profile
+              </Link>
+            </section>
+          )}
           <section className="glass-card p-6">
             <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">

@@ -38,7 +38,10 @@ export default async function RewardsPage() {
     getBadgesWithEarnedStatus(),
   ]);
 
-  const badges = dbBadges.length > 0 ? dbBadges : fallbackBadges;
+  // Signed-in users see their real badges (empty until earned).
+  // Anonymous visitors see a preview grid so the page isn't blank.
+  const isSignedIn = fan !== null;
+  const badges = isSignedIn ? dbBadges : fallbackBadges;
   const earnedCount = badges.filter((b) => b.earned).length;
 
   // Tier progress — real if signed in, fallback if preview.
@@ -107,30 +110,39 @@ export default async function RewardsPage() {
                 View history
               </button>
             </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {badges.map((badge) => (
-                <div
-                  key={badge.slug}
-                  className={`rounded-2xl border border-white/10 p-4 ${
-                    badge.earned ? "bg-white/10" : "bg-black/30"
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{badge.name}</p>
-                  <p className="text-xs uppercase tracking-wide text-white/50">
-                    {badge.point_value} pts
-                  </p>
-                  <p
-                    className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs ${
-                      badge.earned
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-white/10 text-white/60"
+            {badges.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-black/20 p-8 text-center">
+                <p className="text-sm font-semibold">No badges yet</p>
+                <p className="mt-2 text-xs text-white/60">
+                  Complete missions and referrals to start earning badges.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.slug}
+                    className={`rounded-2xl border border-white/10 p-4 ${
+                      badge.earned ? "bg-white/10" : "bg-black/30"
                     }`}
                   >
-                    {badge.earned ? "Unlocked" : "Locked"}
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <p className="text-sm font-semibold">{badge.name}</p>
+                    <p className="text-xs uppercase tracking-wide text-white/50">
+                      {badge.point_value} pts
+                    </p>
+                    <p
+                      className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs ${
+                        badge.earned
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-white/10 text-white/60"
+                      }`}
+                    >
+                      {badge.earned ? "Unlocked" : "Locked"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 

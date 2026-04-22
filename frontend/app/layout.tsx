@@ -77,14 +77,22 @@ export default async function RootLayout({
               ))}
             </nav>
             {user ? (
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
+              <div className="flex items-center gap-3">
+                <span
+                  className="hidden rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-xs text-white/60 sm:inline-flex"
+                  title={user.email ?? undefined}
                 >
-                  Sign out
-                </button>
-              </form>
+                  {user.email?.split("@")[0] ?? "Signed in"}
+                </span>
+                <form action="/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/10"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link
@@ -95,7 +103,7 @@ export default async function RootLayout({
                 </Link>
                 <Link
                   href="/onboarding"
-                  className="rounded-full bg-gradient-to-r from-aurora to-ember px-4 py-2 text-sm font-semibold text-white shadow-glass"
+                  className="rounded-full bg-gradient-to-r from-aurora to-ember px-4 py-2 text-sm font-semibold text-white shadow-glass transition hover:brightness-110"
                 >
                   Join
                 </Link>
