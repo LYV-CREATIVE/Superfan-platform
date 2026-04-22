@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentFan, getCurrentFanKpis } from "@/lib/data/fan";
 import { getFeaturedOffers } from "@/lib/data/offers";
 import { getTiers, tierIcon } from "@/lib/data/tiers";
@@ -41,7 +42,19 @@ function formatPts(n: number | null | undefined) {
   return new Intl.NumberFormat("en-US").format(n) + " pts";
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  // Supabase's default email templates point the confirmation link at
+  // `{SITE_URL}?code=...` — i.e., the root — instead of `/auth/callback`.
+  // Forward any code to the real callback route so sessions actually complete.
+  const params = await searchParams;
+  if (params.code) {
+    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}&next=/onboarding`);
+  }
+
   // Kick off all three queries in parallel. They each gracefully return
   // null / empty on any error, so the page never breaks.
   const [fan, kpis, featured, tiers] = await Promise.all([
