@@ -40,7 +40,10 @@ export interface FanProfile {
   current_tier: TierSlug;
   sms_opted_in: boolean;
   email_opted_in: boolean;
+  avatar_url: string | null;
 }
+
+export type BadgeCategory = "welcome" | "referral" | "community" | "tier";
 
 export interface FanKpis {
   total_points: number;
@@ -70,8 +73,13 @@ export interface Badge {
   description: string | null;
   icon: string | null;
   point_value: number;
+  category: BadgeCategory | null;
+  threshold: number | null;
+  sort_order: number;
   earned: boolean;
   earned_at: string | null;
+  /** Current count toward the threshold (null for tier / welcome badges). */
+  progress?: number | null;
 }
 
 export interface Referral {

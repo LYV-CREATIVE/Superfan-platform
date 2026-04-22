@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageUploader from "@/components/image-uploader";
 import type { ChallengeEntry } from "@/lib/data/types";
 import { submitEntryAction } from "./actions";
 
@@ -30,8 +31,8 @@ export default function ChallengeBlock({
   currentUserId: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [showImage, setShowImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploaderKey, setUploaderKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   const alreadyEntered =
@@ -43,7 +44,7 @@ export default function ChallengeBlock({
     try {
       await submitEntryAction(formData);
       formRef.current?.reset();
-      setShowImage(false);
+      setUploaderKey((k) => k + 1);
       setOpen(false);
     } finally {
       setSubmitting(false);
@@ -87,22 +88,13 @@ export default function ChallengeBlock({
             placeholder="Describe your entry (optional)…"
             className="w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
           />
-          {showImage && (
-            <input
-              type="url"
-              name="image_url"
-              placeholder="https://image.url/my-entry.jpg"
-              className="w-full rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-            />
-          )}
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setShowImage((v) => !v)}
-              className="text-xs text-white/60 hover:text-white"
-            >
-              {showImage ? "− Remove image" : "+ Add image URL"}
-            </button>
+          <ImageUploader
+            key={uploaderKey}
+            bucket="community-uploads"
+            name="image_url"
+            label="Add photo"
+          />
+          <div className="flex items-center justify-end">
             <button
               type="submit"
               disabled={submitting}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AvatarUploadCard from "./avatar-upload-card";
 import { getBadgesWithEarnedStatus } from "@/lib/data/badges";
 import {
   getCurrentFan,
@@ -6,15 +7,23 @@ import {
   getPointBreakdown,
 } from "@/lib/data/fan";
 import { getTiers, tierIcon } from "@/lib/data/tiers";
-import type { TierSlug } from "@/lib/data/types";
+import type { Badge, BadgeCategory, TierSlug } from "@/lib/data/types";
 
 // ─── Static preview content ────────────────────────────────────────────────
-const fallbackBadges = [
-  { slug: "day-one", name: "Day One", point_value: 250, earned: true },
-  { slug: "backstage-pass", name: "Backstage Pass", point_value: 750, earned: true },
-  { slug: "referrer", name: "Referrer", point_value: 1000, earned: false },
-  { slug: "superfan", name: "Superfan", point_value: 2000, earned: false },
+const fallbackBadges: Badge[] = [
+  { slug: "welcome",       name: "Welcome aboard",     description: "Created your fan profile.",              icon: "👋",  point_value: 25,  category: "welcome",   threshold: null, sort_order: 1,  earned: true,  earned_at: null, progress: null },
+  { slug: "first-post",    name: "First post",          description: "Shared your first community post.",     icon: "✍️",  point_value: 25,  category: "welcome",   threshold: 1,    sort_order: 2,  earned: false, earned_at: null, progress: null },
+  { slug: "referral-1",    name: "Recruiter",           description: "Referred your first fan.",              icon: "🎯",  point_value: 50,  category: "referral",  threshold: 1,    sort_order: 4,  earned: false, earned_at: null, progress: null },
+  { slug: "tier-bronze",   name: "Bronze tier",         description: "Welcome to the Bronze circle.",         icon: "🥉",  point_value: 0,   category: "tier",      threshold: null, sort_order: 10, earned: true,  earned_at: null, progress: null },
 ];
+
+const CATEGORY_LABELS: Record<BadgeCategory, string> = {
+  welcome:   "Getting started",
+  community: "Community",
+  referral:  "Referrals",
+  tier:      "Tier milestones",
+};
+const CATEGORY_ORDER: BadgeCategory[] = ["welcome", "community", "referral", "tier"];
 
 type EarnMore = {
   title: string;
@@ -54,8 +63,18 @@ export default async function RewardsPage() {
   // Signed-in users see their real badges (empty until earned).
   // Anonymous visitors see a preview grid so the page isn't blank.
   const isSignedIn = fan !== null;
-  const badges = isSignedIn ? dbBadges : fallbackBadges;
+  const badges: Badge[] = isSignedIn ? dbBadges : fallbackBadges;
   const earnedCount = badges.filter((b) => b.earned).length;
+  const totalBadges = badges.length;
+
+  // Group by category for the grid.
+  const badgesByCategory = new Map<BadgeCategory, Badge[]>();
+  for (const b of badges) {
+    const cat = (b.category ?? "welcome") as BadgeCategory;
+    const arr = badgesByCategory.get(cat) ?? [];
+    arr.push(b);
+    badgesByCategory.set(cat, arr);
+  }
 
   // Tier progress — real if signed in, fallback if preview.
   const currentSlug = (fan?.current_tier ?? "bronze") as TierSlug;
@@ -116,12 +135,15 @@ export default async function RewardsPage() {
               <div>
                 <p className="text-sm uppercase tracking-wide text-white/60">Badge gallery</p>
                 <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>
-                  {earnedCount} badges unlocked
+                  {earnedCount} / {totalBadges} unlocked
                 </h2>
               </div>
-              <button className="rounded-full border border-white/30 px-4 py-2 text-sm text-white/80">
-                View history
-              </button>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wide text-white/50">Progress</p>
+                <p className="text-sm font-semibold text-emerald-300">
+                  {totalBadges > 0 ? Math.round((earnedCount / totalBadges) * 100) : 0}%
+                </p>
+              </div>
             </div>
             {badges.length === 0 ? (
               <div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-black/20 p-8 text-center">
@@ -131,35 +153,85 @@ export default async function RewardsPage() {
                 </p>
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {badges.map((badge) => (
-                  <div
-                    key={badge.slug}
-                    className={`rounded-2xl border border-white/10 p-4 ${
-                      badge.earned ? "bg-white/10" : "bg-black/30"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold">{badge.name}</p>
-                    <p className="text-xs uppercase tracking-wide text-white/50">
-                      {badge.point_value} pts
-                    </p>
-                    <p
-                      className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs ${
-                        badge.earned
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-white/10 text-white/60"
-                      }`}
-                    >
-                      {badge.earned ? "Unlocked" : "Locked"}
-                    </p>
-                  </div>
-                ))}
+              <div className="mt-6 space-y-6">
+                {CATEGORY_ORDER.map((cat) => {
+                  const catBadges = badgesByCategory.get(cat) ?? [];
+                  if (catBadges.length === 0) return null;
+                  return (
+                    <div key={cat} className="space-y-3">
+                      <p className="text-xs uppercase tracking-wide text-white/50">
+                        {CATEGORY_LABELS[cat]} · {catBadges.filter((b) => b.earned).length}/{catBadges.length}
+                      </p>
+                      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                        {catBadges.map((badge) => {
+                          const hasThreshold = badge.threshold != null && badge.threshold > 0;
+                          const progress = badge.progress ?? 0;
+                          const pct = hasThreshold
+                            ? Math.min(100, Math.round((progress / (badge.threshold ?? 1)) * 100))
+                            : badge.earned ? 100 : 0;
+                          return (
+                            <div
+                              key={badge.slug}
+                              className={`rounded-2xl border p-4 ${
+                                badge.earned
+                                  ? "border-emerald-500/40 bg-emerald-500/10"
+                                  : "border-white/10 bg-black/30"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span
+                                  className={`flex h-10 w-10 items-center justify-center rounded-full text-xl ${
+                                    badge.earned ? "bg-emerald-500/20" : "bg-white/5 grayscale opacity-70"
+                                  }`}
+                                  aria-hidden
+                                >
+                                  {badge.icon ?? "🏅"}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold leading-tight">{badge.name}</p>
+                                  <p className="mt-0.5 text-[11px] text-white/60">
+                                    {badge.earned ? "Unlocked" : "Locked"}
+                                    {badge.point_value > 0 && ` · +${badge.point_value} pts`}
+                                  </p>
+                                </div>
+                              </div>
+                              {badge.description && (
+                                <p className="mt-2 text-xs text-white/60">{badge.description}</p>
+                              )}
+                              {hasThreshold && !badge.earned && isSignedIn && (
+                                <div className="mt-3 space-y-1">
+                                  <div className="h-1.5 rounded-full bg-black/40">
+                                    <div
+                                      className="h-full rounded-full bg-gradient-to-r from-aurora to-ember"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-[10px] text-white/50">
+                                    {progress} / {badge.threshold}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
         </div>
 
         <aside className="w-full max-w-sm space-y-6">
+          {isSignedIn && (
+            <AvatarUploadCard
+              initialUrl={fan?.avatar_url ?? null}
+              firstName={fan?.first_name ?? null}
+              email={fan?.email ?? null}
+            />
+          )}
+
           <section className="glass-card p-6">
             <p className="text-sm uppercase tracking-wide text-white/60">Earn more points</p>
             <div className="mt-4 space-y-4">

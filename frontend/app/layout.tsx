@@ -33,7 +33,17 @@ async function getCurrentUserSafe() {
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
-    return data.user;
+    if (!data.user) return null;
+    const { data: fan } = await supabase
+      .from("fans")
+      .select("first_name, avatar_url")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    return {
+      email: data.user.email,
+      first_name: (fan?.first_name as string | null) ?? null,
+      avatar_url: (fan?.avatar_url as string | null) ?? null,
+    };
   } catch {
     return null;
   }
@@ -78,12 +88,27 @@ export default async function RootLayout({
             </nav>
             {user ? (
               <div className="flex items-center gap-3">
-                <span
-                  className="hidden rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-xs text-white/60 sm:inline-flex"
+                <Link
+                  href="/rewards"
+                  className="hidden items-center gap-2 rounded-full border border-white/15 bg-black/30 px-2 py-1 text-xs text-white/80 hover:bg-white/10 sm:inline-flex"
                   title={user.email ?? undefined}
                 >
-                  {user.email?.split("@")[0] ?? "Signed in"}
-                </span>
+                  {user.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.avatar_url}
+                      alt=""
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-aurora to-ember text-[10px] font-bold">
+                      {(user.first_name?.[0] ?? user.email?.[0] ?? "F").toUpperCase()}
+                    </span>
+                  )}
+                  <span>
+                    {user.first_name ?? user.email?.split("@")[0] ?? "Signed in"}
+                  </span>
+                </Link>
                 <form action="/auth/signout" method="post">
                   <button
                     type="submit"

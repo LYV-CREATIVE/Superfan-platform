@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageUploader from "@/components/image-uploader";
 import {
   createAnnouncementAction,
   createChallengeAction,
@@ -19,14 +20,16 @@ export default function NewPostForm({
 }) {
   const [kind, setKind] = useState<Kind>("post");
   const [submitting, setSubmitting] = useState(false);
-  const [showImage, setShowImage] = useState(false);
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  // Bump this key to force-remount the ImageUploader after a submit (which
+  // clears its internal state + hidden input).
+  const [uploaderKey, setUploaderKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   function resetForm() {
     formRef.current?.reset();
-    setShowImage(false);
     setPollOptions(["", ""]);
+    setUploaderKey((k) => k + 1);
   }
 
   async function handleSubmit(formData: FormData) {
@@ -164,28 +167,22 @@ export default function NewPostForm({
         </div>
       )}
 
-      {showImage && kind !== "poll" && (
-        <input
-          type="url"
+      {kind !== "poll" && (
+        <ImageUploader
+          key={uploaderKey}
+          bucket="community-uploads"
           name="image_url"
-          placeholder="https://image.url/example.jpg"
-          className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+          label={kind === "challenge" ? "Add cover photo" : "Add photo"}
         />
       )}
 
       <div className="flex items-center justify-between">
-        {kind !== "poll" ? (
-          <button
-            type="button"
-            onClick={() => setShowImage((v) => !v)}
-            className="text-xs text-white/60 hover:text-white"
-          >
-            {showImage ? "− Remove image" : "+ Add image URL"}
-          </button>
-        ) : (
+        {kind === "poll" ? (
           <span className="text-xs text-white/50">
             {pollOptions.filter((o) => o.trim()).length} of 6 options
           </span>
+        ) : (
+          <span />
         )}
         <button
           type="submit"
