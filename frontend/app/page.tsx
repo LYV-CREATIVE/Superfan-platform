@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import InviteQRCode from "@/components/invite-qr";
 import { getCurrentFan, getCurrentFanKpis } from "@/lib/data/fan";
 import { getFeaturedOffers } from "@/lib/data/offers";
 import { getTiers, tierIcon } from "@/lib/data/tiers";
@@ -88,8 +90,11 @@ export default async function Home({
 
   // Show a "Finish profile" nudge when signed-in users have no first_name yet.
   const needsProfile = fan !== null && !fan.first_name;
+  const isSignedIn = fan !== null;
 
-  // Featured offers: prefer DB, fall back to static preview rows.
+  // Featured offers: DB when signed-in (empty state if none), static preview
+  // for signed-out visitors only. Stops fake "4,500 pts Signed Vinyl" from
+  // appearing as if it's real inventory.
   const offers =
     featured.length > 0
       ? featured.map((o) => ({
@@ -97,10 +102,23 @@ export default async function Home({
           tier: `${o.min_tier[0].toUpperCase() + o.min_tier.slice(1)}`,
           points: o.price_points ? formatPts(o.price_points) : `$${(o.price_cents ?? 0) / 100}`,
         }))
-      : fallbackOffers;
+      : isSignedIn
+        ? []
+        : fallbackOffers;
 
   // Tier journey card — use real tier + fan's current status if available.
   const currentTier = (fan?.current_tier ?? "bronze") as TierSlug;
+
+  // Build the invite URL for signed-in fans (used by the QR card).
+  const headerList = await headers();
+  const host =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (headerList.get("x-forwarded-host") ?? headerList.get("host"));
+  const proto = headerList.get("x-forwarded-proto") ?? "https";
+  const origin = host?.startsWith("http") ? host : `${proto}://${host}`;
+  const inviteUrl = fan?.referral_code
+    ? `${origin}/invite/${fan.referral_code}`
+    : null;
 
   return (
     <div className="min-h-screen bg-midnight">
@@ -173,35 +191,52 @@ export default async function Home({
               <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
                 <span>📅</span> Upcoming Events
               </p>
-              {events.map((event) => (
-                <div key={event.title} className="flex items-center justify-between rounded-2xl bg-black/30 p-4">
-                  <div>
-                    <p className="text-sm font-semibold">{event.title}</p>
-                    <p className="text-xs text-white/60">{event.detail}</p>
-                  </div>
-                  <span className="text-sm font-medium text-white/70">{event.date}</span>
+              {isSignedIn ? (
+                <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-6 text-center text-xs text-white/60">
+                  No events scheduled yet. Artist drops and listening parties will show here.
                 </div>
-              ))}
+              ) : (
+                events.map((event) => (
+                  <div
+                    key={event.title}
+                    className="flex items-center justify-between rounded-2xl bg-black/30 p-4"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">{event.title}</p>
+                      <p className="text-xs text-white/60">{event.detail}</p>
+                    </div>
+                    <span className="text-sm font-medium text-white/70">{event.date}</span>
+                  </div>
+                ))
+              )}
             </div>
             <div className="glass-card space-y-4 p-6">
               <p className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/60">
                 <span>🎁</span> Recommended Offers
               </p>
-              {offers.map((offer) => (
-                <div key={offer.title} className="rounded-2xl bg-black/30 p-4">
-                  <p className="text-sm font-semibold">{offer.title}</p>
-                  <p className="text-xs uppercase tracking-wide text-white/50">{offer.tier}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-lg font-semibold text-emerald-300">{offer.points}</span>
-                    <Link
-                      href="/marketplace"
-                      className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium"
-                    >
-                      View
-                    </Link>
-                  </div>
+              {offers.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-6 text-center text-xs text-white/60">
+                  No offers right now. Check back — new drops appear here automatically.
                 </div>
-              ))}
+              ) : (
+                offers.map((offer) => (
+                  <div key={offer.title} className="rounded-2xl bg-black/30 p-4">
+                    <p className="text-sm font-semibold">{offer.title}</p>
+                    <p className="text-xs uppercase tracking-wide text-white/50">{offer.tier}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-lg font-semibold text-emerald-300">
+                        {offer.points}
+                      </span>
+                      <Link
+                        href="/marketplace"
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium"
+                      >
+                        View
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
@@ -258,13 +293,36 @@ export default async function Home({
             </div>
           </section>
 
-          <section className="glass-card p-6">
-            <p className="text-sm uppercase tracking-wide text-white/60">Mobile Snapshot</p>
-            <div className="mt-4 h-80 rounded-2xl bg-gradient-to-b from-purple-700/40 to-black/60" />
-            <p className="mt-3 text-xs text-white/60">
-              Mobile view mirrors the mockups with scrollable cards and sticky CTA.
-            </p>
-          </section>
+          {inviteUrl ? (
+            <section className="glass-card p-6">
+              <p className="text-sm uppercase tracking-wide text-white/60">Your invite</p>
+              <p className="mt-2 text-xs text-white/60">
+                Share the QR for instant sign-ups. Every verified join earns you 150 pts.
+              </p>
+              <div className="mt-4">
+                <InviteQRCode url={inviteUrl} />
+              </div>
+              <Link
+                href="/referrals"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+              >
+                Open referrals →
+              </Link>
+            </section>
+          ) : !isSignedIn ? (
+            <section className="glass-card p-6">
+              <p className="text-sm uppercase tracking-wide text-white/60">Your invite</p>
+              <p className="mt-2 text-xs text-white/60">
+                Create an account to unlock your personal referral QR code and earn points for every friend who joins.
+              </p>
+              <Link
+                href="/signup"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-aurora to-ember px-4 py-2 text-sm font-semibold text-white shadow-glass transition hover:brightness-110"
+              >
+                Create account
+              </Link>
+            </section>
+          ) : null}
         </aside>
       </main>
     </div>

@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { getBadgesWithEarnedStatus } from "@/lib/data/badges";
-import { getCurrentFan, getCurrentFanKpis } from "@/lib/data/fan";
+import {
+  getCurrentFan,
+  getCurrentFanKpis,
+  getPointBreakdown,
+} from "@/lib/data/fan";
 import { getTiers, tierIcon } from "@/lib/data/tiers";
 import type { TierSlug } from "@/lib/data/types";
 
@@ -11,14 +16,21 @@ const fallbackBadges = [
   { slug: "superfan", name: "Superfan", point_value: 2000, earned: false },
 ];
 
-const earnMore = [
-  { title: "Host a listening party", detail: "Upload recap + 5 photos", reward: "+400 pts" },
-  { title: "Share referral link", detail: "Every verified signup", reward: "+150 pts" },
-  { title: "Merch drop review", detail: "Post video + tag artist", reward: "+200 pts" },
-  { title: "Attend livestream Q&A", detail: "Submit 2 questions", reward: "+120 pts" },
+type EarnMore = {
+  title: string;
+  detail: string;
+  reward: string;
+  href: string;
+};
+const earnMore: EarnMore[] = [
+  { title: "Share referral link", detail: "Every verified signup", reward: "+150 pts", href: "/referrals" },
+  { title: "Browse marketplace", detail: "Redeem points for drops", reward: "—", href: "/marketplace" },
+  { title: "Host a listening party", detail: "Upload recap + 5 photos", reward: "+400 pts", href: "#" },
+  { title: "Attend livestream Q&A", detail: "Submit 2 questions", reward: "+120 pts", href: "#" },
 ];
 
-const categories = [
+// Static preview breakdown shown only to signed-out visitors.
+const previewCategories = [
   { label: "Listening quests", value: "4,200 pts" },
   { label: "Referrals", value: "2,800 pts" },
   { label: "Events & travel", value: "3,400 pts" },
@@ -31,11 +43,12 @@ function formatPts(n: number | null | undefined) {
 }
 
 export default async function RewardsPage() {
-  const [fan, kpis, tiers, dbBadges] = await Promise.all([
+  const [fan, kpis, tiers, dbBadges, breakdown] = await Promise.all([
     getCurrentFan(),
     getCurrentFanKpis(),
     getTiers(),
     getBadgesWithEarnedStatus(),
+    getPointBreakdown(),
   ]);
 
   // Signed-in users see their real badges (empty until earned).
@@ -150,29 +163,73 @@ export default async function RewardsPage() {
           <section className="glass-card p-6">
             <p className="text-sm uppercase tracking-wide text-white/60">Earn more points</p>
             <div className="mt-4 space-y-4">
-              {earnMore.map((item) => (
-                <div key={item.title} className="rounded-2xl bg-black/30 p-4">
-                  <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="text-xs text-white/60">{item.detail}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-emerald-300">{item.reward}</span>
-                    <button className="text-xs text-white/70">Start →</button>
+              {earnMore.map((item) => {
+                const inner = (
+                  <>
+                    <p className="text-sm font-semibold">{item.title}</p>
+                    <p className="text-xs text-white/60">{item.detail}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-emerald-300">
+                        {item.reward}
+                      </span>
+                      {item.href !== "#" && (
+                        <span className="text-xs text-white/70">Start →</span>
+                      )}
+                    </div>
+                  </>
+                );
+                return item.href === "#" ? (
+                  <div key={item.title} className="rounded-2xl bg-black/30 p-4">
+                    {inner}
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    className="block rounded-2xl bg-black/30 p-4 transition hover:bg-black/40"
+                  >
+                    {inner}
+                  </Link>
+                );
+              })}
             </div>
           </section>
 
           <section className="glass-card p-6">
             <p className="text-sm uppercase tracking-wide text-white/60">Point breakdown</p>
-            <div className="mt-4 space-y-3">
-              {categories.map((cat) => (
-                <div key={cat.label} className="flex items-center justify-between text-sm text-white/70">
-                  <span>{cat.label}</span>
-                  <span className="font-semibold text-white">{cat.value}</span>
+            {isSignedIn ? (
+              breakdown.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {breakdown.map((cat) => (
+                    <div
+                      key={cat.source}
+                      className="flex items-center justify-between text-sm text-white/70"
+                    >
+                      <span>{cat.label}</span>
+                      <span className="font-semibold text-white">
+                        {new Intl.NumberFormat("en-US").format(cat.total)} pts
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-center text-xs text-white/60">
+                  Earn your first points to see a breakdown here.
+                </div>
+              )
+            ) : (
+              <div className="mt-4 space-y-3">
+                {previewCategories.map((cat) => (
+                  <div
+                    key={cat.label}
+                    className="flex items-center justify-between text-sm text-white/70"
+                  >
+                    <span>{cat.label}</span>
+                    <span className="font-semibold text-white">{cat.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </aside>
       </main>

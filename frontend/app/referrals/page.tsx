@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getCurrentFan } from "@/lib/data/fan";
 import { getMyReferrals, getReferralLeaderboard } from "@/lib/data/referrals";
+import InviteQRCode from "@/components/invite-qr";
 import CopyLinkButton from "./copy-link-button";
 
 const ladder = [
@@ -128,8 +129,8 @@ export default async function ReferralsPage() {
         <aside className="w-full max-w-sm space-y-6">
           <section className="glass-card p-6">
             <p className="text-sm uppercase tracking-wide text-white/60">QR invite</p>
-            <div className="mt-4 rounded-2xl bg-black/50 p-6 text-center text-white/60">
-              QR placeholder
+            <div className="mt-4">
+              <InviteQRCode url={inviteUrl} />
             </div>
             <p className="mt-3 text-xs text-white/60">
               Scan to join via {possessive} invite.

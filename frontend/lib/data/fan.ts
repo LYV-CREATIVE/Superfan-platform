@@ -2,6 +2,62 @@ import { createClient } from "@/lib/supabase/server";
 import type { FanKpis, FanProfile, Tier } from "./types";
 import { getTiers } from "./tiers";
 
+export interface PointBreakdownRow {
+  source: string;
+  label: string;
+  total: number;
+}
+
+// Human-readable label per point source. Matches the enum in 0001_init.sql.
+const SOURCE_LABELS: Record<string, string> = {
+  signup_bonus: "Signup bonus",
+  referral: "Referrals",
+  challenge: "Challenges",
+  purchase: "Purchases",
+  manual_adjustment: "Adjustments",
+  event_rsvp: "Event RSVPs",
+  event_attended: "Events attended",
+  social_share: "Social shares",
+  daily_checkin: "Daily check-ins",
+};
+
+/**
+ * Sum of points the current fan has earned, grouped by source. Returns an
+ * empty array for signed-out users or when the fan has no ledger entries.
+ */
+export async function getPointBreakdown(): Promise<PointBreakdownRow[]> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from("points_ledger")
+      .select("source,delta")
+      .eq("fan_id", user.id);
+    if (error) throw error;
+
+    const totals = new Map<string, number>();
+    for (const row of data ?? []) {
+      const source = row.source as string;
+      totals.set(source, (totals.get(source) ?? 0) + (row.delta as number));
+    }
+
+    return [...totals.entries()]
+      .filter(([, total]) => total !== 0)
+      .map(([source, total]) => ({
+        source,
+        label: SOURCE_LABELS[source] ?? source,
+        total,
+      }))
+      .sort((a, b) => b.total - a.total);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Fetches the current user's fan profile. Returns null for signed-out or
  * unconfigured-Supabase — callers should fall back to static preview content.
