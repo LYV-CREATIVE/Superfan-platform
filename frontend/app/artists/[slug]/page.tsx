@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArtist, listArtists } from "@/lib/artists";
+import { getCurrentFan } from "@/lib/data/fan";
 
 export async function generateStaticParams() {
   return listArtists().map((a) => ({ slug: a.slug }));
@@ -28,8 +29,26 @@ export default async function ArtistPage({
   const artist = getArtist(slug);
   if (!artist) notFound();
 
+  const fan = await getCurrentFan();
+  const isSignedIn = fan !== null;
+  const needsProfile = isSignedIn && !fan.first_name;
+
   const heroGradient = `linear-gradient(to bottom right, ${artist.accentFrom}66, #0f172a, #000000)`;
   const ctaGradient = `linear-gradient(to right, ${artist.accentFrom}, ${artist.accentTo})`;
+
+  // Primary CTA adapts to the viewer's state:
+  // - anonymous  → "Join the fan club" → /onboarding?ref=<slug>
+  // - signed in, no profile → "Complete profile" → /onboarding?ref=<slug>
+  // - signed in, profile done → "Shop drops" → /marketplace
+  const primaryCta = !isSignedIn
+    ? { label: "Join the fan club", href: `/onboarding?ref=${artist.slug}` }
+    : needsProfile
+      ? { label: "Complete your profile", href: `/onboarding?ref=${artist.slug}` }
+      : { label: "Shop drops", href: "/marketplace" };
+
+  const secondaryCta = isSignedIn
+    ? { label: "My rewards", href: "/rewards" }
+    : { label: "See merchandise", href: "/marketplace" };
 
   return (
     <main className="mx-auto max-w-6xl space-y-10 px-6 py-12">
@@ -50,17 +69,17 @@ export default async function ArtistPage({
         <p className="mt-3 max-w-xl text-lg text-white/80">{artist.tagline}</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href={`/onboarding?ref=${artist.slug}`}
-            className="rounded-full px-6 py-3 text-sm font-semibold text-white"
+            href={primaryCta.href}
+            className="rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
             style={{ backgroundImage: ctaGradient }}
           >
-            Join the fan club
+            {primaryCta.label}
           </Link>
           <Link
-            href="/marketplace"
+            href={secondaryCta.href}
             className="rounded-full border border-white/30 px-6 py-3 text-sm font-medium text-white/80 hover:bg-white/10"
           >
-            See merchandise
+            {secondaryCta.label}
           </Link>
         </div>
         {!artist.heroImage && (
@@ -71,7 +90,7 @@ export default async function ArtistPage({
       </section>
 
       {/* About */}
-      <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+      <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="glass-card p-8">
           <p className="text-sm uppercase tracking-wide text-white/60">About</p>
           <p className="mt-4 text-base leading-relaxed text-white/80">{artist.bio}</p>

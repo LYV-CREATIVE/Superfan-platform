@@ -11,7 +11,7 @@ const steps = [
     fields: [
       { label: "Preferred name", name: "firstName", placeholder: "Taylor", type: "text" },
       { label: "Email", name: "email", placeholder: "taylor@email.com", type: "email" },
-      { label: "City", name: "city", placeholder: "Austin, TX", type: "text" },
+      { label: "City & state", name: "city", placeholder: "Austin, TX", type: "text" },
     ],
   },
   {
